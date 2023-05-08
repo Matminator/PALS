@@ -1,5 +1,5 @@
 
-# The Parallel Active Learning and Simulations (PALS) - Suite
+# The Parallel Active Learning and Simulations Suite
 
 The PALS-suite provides functions implimenting activelerning and parrallel cumputations of ensambeld NequIP models.
 
