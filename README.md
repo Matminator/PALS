@@ -3,7 +3,7 @@
 
 The PALS-suite provides functions implimenting activelerning and parrallel cumputations of ensambeld NequIP models.
 
-![billede](https://user-images.githubusercontent.com/121713591/236840145-97c46652-3dff-44ac-aa84-541d31ed3ca1.png)
+![billede](https://user-images.githubusercontent.com/121713591/236923707-61af8e59-989b-4684-99cd-8ce71c6029f8.png)
 
 
 text
