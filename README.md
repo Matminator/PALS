@@ -1,2 +1,1 @@
-# PALS
-The Parallel Active Learning Suite (PALS)
+# The Parallel Active Learning Suite (PALS)
