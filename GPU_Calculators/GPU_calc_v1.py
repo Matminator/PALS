@@ -1,4 +1,3 @@
-
 from ase.io.trajectory import Trajectory
 from ase.visualize import view
 
@@ -18,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 import torch
+import torch.multiprocessing as mp
 
 
 class NequIP_ensemble(Calculator):
@@ -30,26 +30,8 @@ class NequIP_ensemble(Calculator):
         
         super().__init__(*args, **kwargs) # For ASE calculator ... 
         
-        # importing NequIP models:
-        
-        start_time = time.time()
-        
-        models = []
-        for path in model_paths:
-            model = NequIPCalculator.from_deployed_model(
-                model_path = path,
-                species_to_type_name = {"Pt": "Pt", "Ti": "Ti", "O": "O"},
-                device = device
-                )
-            models.append(model)
-            
-                    
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print("Init time: ", elapsed_time, flush = True)
-        
-        self.models = models
-        
+        self.num_GPUs = torch.cuda.device_count()
+        self.model_paths = model_paths
         self.froce_variances = []
         self.energy_variance = []
     
@@ -61,13 +43,38 @@ class NequIP_ensemble(Calculator):
         models_forces = []
         
         # Doing calculation with all models:
-        for model in self.models:
+        if __name__ == '__main__':
             
-            self.NequIP_calculation(self.atoms.copy(),
-                                    model,
-                                    models_energies,
-                                    models_forces)
+            mp.set_start_method('spawn')
             
+            models_forces = []
+            models_energues = []
+            
+            print('0', flush = True)
+            
+            with mp.Manager() as manager:
+                
+                print('1', flush = True)
+
+                models_forces = manager.Array('f', (len(self.atoms), 3))
+                models_energies = manager.Array('f', 1)
+
+                print('2', flush = True)
+            
+                processes = []
+                for path in self.model_paths:
+                    p = mp.Process(
+                                    target=self.NequIP_calculation,
+                                    args = (self.atoms.copy(), path, models_energies, models_forces, len(processes))
+                                   )
+                    p.start()
+                    processes.append(p)
+
+                for p in processes:
+                    p.join()
+                    
+            print(models_forces, flush = True)
+                               
         # Computing resulting froce and variances
         forces_mean, froce_variances = self.force_calculations(models_forces)
         energy_mean = np.mean(models_energies)
@@ -83,14 +90,20 @@ class NequIP_ensemble(Calculator):
                         'stresses': np.zeros((len(self.atoms), 6))}            
             
             
-    def NequIP_calculation(self, atoms, model, models_energies, models_forces):
+    def NequIP_calculation(self, atoms, path, models_energies, models_forces, key):
+                               
+        model = NequIPCalculator.from_deployed_model(
+            model_path = path,
+            species_to_type_name = {"Pt": "Pt", "Ti": "Ti", "O": "O"},
+            device = device
+        )
         
         atoms.calc = model
         energy = atoms.get_potential_energy() # Getting energy
         forces = atoms.get_forces()
         
-        models_energies.append(energy)
-        models_forces.append(forces)
+        models_energies[key] = energy
+        models_forces[key] = forces
         
 
     def force_calculations(self, models_forces):
@@ -105,60 +118,3 @@ class NequIP_ensemble(Calculator):
         variances = np.sum(variances, axis = 0)/M
 
         return mean_components, variances
-
-
-
-
-
-
-
-
-
-
-config = Trajectory('data_set_GEN_1_for_models.traj')[0]
-
-
-model_paths = [
-    's=0.pth',
-    's=1.pth',
-    's=2.pth',
-    's=3.pth',
-    's=4.pth']
-
-# i = 0
-# mod_E_val = []
-# mod_SD_val = []
-# #for config in val_set:
-# for config in configs:
-#     config.calc = NequIP_ensemble(model_paths)
-#     mod_E_val.append(config.get_potential_energy()/len(config))
-#     i += 1
-#     print(i, flush = True)
-
-config.calc = NequIP_ensemble(model_paths, device = 'cuda')
-    
-
-# **********************************************************
-
-    
-
-#MaxwellBoltzmannDistribution(config, temperature_K=300)
-
-dynamics = VelocityVerlet(config, 5 * units.fs)
-
-traj = Trajectory('PALS_molDynTest.traj', 'w', config)
-dynamics.attach(traj.write, interval=1)
-
-
-# start_time = time.time()
-
-dynamics.run(20)
-
-# end_time = time.time()
-# elapsed_time = end_time - start_time
-# print("Elapsed time: ", elapsed_time)
-
-pd.DataFrame(config.calc.energy_variance).to_csv("PALS_E_Variance_test.csv")
-pd.DataFrame(config.calc.froce_variances).to_csv("PALS_force_Variance_test.csv")
-
-
