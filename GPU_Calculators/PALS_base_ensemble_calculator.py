@@ -22,7 +22,7 @@ import torch
 class PALS_basic_ensemble(Calculator):
     implemented_properties = ['energy', 'energies', 'forces', 'stress', 'stresses']
     
-    def __init__(self, model_paths, device = 'cpu', store_all = False, dir_name = None, logo = True, *args, **kwargs):
+    def __init__(self, model_paths, species_names, device = 'cpu', store_all = False, dir_name = None, logo = True, *args, **kwargs):
         """
         model_paths: paths to NequIP models.
         device: cup or cuda (cuda for GPU)
@@ -40,7 +40,7 @@ class PALS_basic_ensemble(Calculator):
         for path in model_paths:
             model = NequIPCalculator.from_deployed_model(
                 model_path = path,
-                species_to_type_name = {"Pt": "Pt", "Ti": "Ti", "O": "O"},
+                species_to_type_name = species_names, # {"Pt": "Pt", "Ti": "Ti", "O": "O"},
                 device = device
                 )
             models.append(model)
