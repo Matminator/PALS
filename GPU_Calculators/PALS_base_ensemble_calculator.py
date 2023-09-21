@@ -31,8 +31,6 @@ class PALS_basic_ensemble(Calculator):
         """
         super().__init__(*args, **kwargs) # For ASE calculator ... 
 
-        if logo:
-            self.print_logo()
         
         # importing NequIP models:
         print('*** Initializing models ***********************', flush = True)
@@ -52,6 +50,9 @@ class PALS_basic_ensemble(Calculator):
         elapsed_time = end_time - start_time
         print("Initializing time: ", elapsed_time, flush = True)
         print('***********************************************', flush = True)
+        
+        if logo:
+            self.print_logo()
         
         # Making lists to save model variances:
         self.force_variance = []
