@@ -6,4 +6,4 @@ The NequIP PALS suite provides functions implimenting activelerning and parralle
 ![billede](https://user-images.githubusercontent.com/121713591/236923965-d22d6363-3e70-41ef-8c62-06438ea3a1c5.png)
 
 
-text
+tutorial: https://colab.research.google.com/drive/1RDPsuuJ6j6XhvYio2wixsk8P9wubGWro#scrollTo=PXXzrJJf00_G
